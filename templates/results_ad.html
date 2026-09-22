@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AD Results · {{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <canvas id="neuralCanvas"></canvas>
+
+  <header>
+    <div class="logo">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="url(#lg1ra)" stroke-width="1.5"/>
+        <path d="M8 18 C10 12, 14 10, 18 18 C22 26, 26 24, 28 18" stroke="url(#lg2ra)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="8"  cy="18" r="2.5" fill="#a78bfa"/>
+        <circle cx="28" cy="18" r="2.5" fill="#38bdf8"/>
+        <defs>
+          <linearGradient id="lg1ra" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+          <linearGradient id="lg2ra" x1="0" y1="18" x2="36" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-name">Neuro<strong>Fusion</strong></span>
+        <span class="logo-version">v2.0</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/" class="nav-link">Home</a>
+      <a href="/alzheimers" class="nav-link active">Alzheimer's</a>
+      <a href="/dementia" class="nav-link">Dementia</a>
+      <a href="/chat" class="nav-link">AI Assistant</a>
+      <a href="/history" class="nav-link">History</a>
+    </nav>
+  </header>
+
+  <main class="results-main">
+
+    {% if error %}
+    <div class="error-panel">
+      <div class="error-glyph">!</div>
+      <h2>Analysis Failed</h2>
+      <p class="error-msg">{{ error }}</p>
+      {% if error_detail %}<p class="error-detail">{{ error_detail }}</p>{% endif %}
+      <a href="/alzheimers" class="btn-run" style="display:inline-flex;margin-top:1.5rem">← Try Again</a>
+    </div>
+
+    {% else %}
+
+    <div class="result-header">
+      <div class="result-pills">
+        <span class="pill pill-mono">Job: {{ job_id }}</span>
+        <span class="pill">{{ video_name }}</span>
+        {% if elapsed_sec %}<span class="pill">{{ elapsed_sec }}s</span>{% endif %}
+        {% if frames_extracted %}<span class="pill">{{ frames_extracted }} frames</span>{% endif %}
+      </div>
+      <h1>Alzheimer's Analysis <span class="gradient-text">Complete</span></h1>
+    </div>
+
+    <!-- Main prediction card -->
+    <div class="pred-card {% if prediction and 'Detected' in prediction and 'No' not in prediction %}pred-risk{% else %}pred-clear{% endif %}">
+      <div class="pred-value">{{ prediction }}</div>
+    </div>
+
+    <div class="score-grid score-single">
+      <div class="score-card">
+        <div class="score-title">Cognitive Risk Score</div>
+        <div class="score-big {% if risk_level=='Low' %}s-low{% elif risk_level=='Moderate' %}s-mod{% elif risk_level=='High' %}s-high{% else %}s-vhigh{% endif %}">
+          {{ risk_score_percent }}%
+        </div>
+        <div class="risk-badge risk-{{ (risk_level or 'Low')|lower|replace(' ','-') }}">{{ risk_level }}</div>
+        <div class="bar-wrap">
+          <div class="bar-track">
+            <div class="bar-fill bar-risk" data-w="{{ [risk_score_percent,100]|min }}"></div>
+          </div>
+          <div class="bar-labels"><span>0</span><span>50</span><span>100%</span></div>
+        </div>
+        {% if stage_a_risk_percent is not none %}
+        <p style="font-size:0.75rem;color:#888;margin-top:0.75rem;">
+          Trained Stage A SVM ensemble score: <strong style="color:#a78bfa;">{{ stage_a_risk_percent }}%</strong>
+          ({{ stage_a_level }})
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Explainability -->
+    {% if explainability %}
+    <div class="expl-section">
+      <div class="section-label">AI Explainability — Feature Contributions</div>
+      <div class="expl-bars">
+        {% for name, val in explainability.items() %}
+        <div class="expl-row">
+          <div class="expl-name">{{ name | replace('_',' ') | title }}</div>
+          <div class="expl-track">
+            <div class="expl-fill {% if val > 65 %}expl-high{% elif val > 40 %}expl-med{% else %}expl-low{% endif %}"
+                 data-w="{{ val }}" style="width:0%"></div>
+          </div>
+          <div class="expl-val">{{ val }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Feature breakdown -->
+    <div class="features-section">
+      <div class="section-label">Feature Analysis</div>
+      <div class="feat-grid">
+        {% if speech_features %}
+        <div class="feat-card">
+          <div class="feat-head">
+            <span class="feat-icon speech-icon">🎵</span>
+            <span class="feat-title">Speech Biomarkers</span>
+          </div>
+          {% for key, val in speech_features.items() %}
+          <div class="feat-row">
+            <span class="feat-key">{{ key }}</span>
+            <span class="feat-val">{{ val }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if visual_features %}
+        <div class="feat-card">
+          <div class="feat-head">
+            <span class="feat-icon visual-icon">👁</span>
+            <span class="feat-title">Visual Biomarkers</span>
+          </div>
+          {% for key, val in visual_features.items() %}
+          <div class="feat-row">
+            <span class="feat-key">{{ key }}</span>
+            <span class="feat-val">{{ val }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Risk legend -->
+    <div class="risk-legend">
+      <div class="section-label">Risk Score Interpretation</div>
+      <div class="legend-grid">
+        <div class="legend-zone lz-low {% if risk_level=='Low' %}lz-active{% endif %}">
+          <div class="lz-label">Low</div>
+          <div class="lz-range">0 – 30%</div>
+          <div class="lz-desc">No significant markers detected</div>
+        </div>
+        <div class="legend-zone lz-mod {% if risk_level=='Moderate' %}lz-active{% endif %}">
+          <div class="lz-label">Moderate</div>
+          <div class="lz-range">30 – 55%</div>
+          <div class="lz-desc">Some patterns; consider follow-up</div>
+        </div>
+        <div class="legend-zone lz-high {% if risk_level=='High' %}lz-active{% endif %}">
+          <div class="lz-label">High</div>
+          <div class="lz-range">55 – 75%</div>
+          <div class="lz-desc">Multiple markers; recommend evaluation</div>
+        </div>
+        <div class="legend-zone lz-vhigh {% if risk_level=='Very High' %}lz-active{% endif %}">
+          <div class="lz-label">Very High</div>
+          <div class="lz-range">75 – 100%</div>
+          <div class="lz-desc">Strong indicators; urgent consultation</div>
+        </div>
+      </div>
+    </div>
+
+    {% if notes %}
+    <div class="notes-card">
+      {% for note in notes.split(' | ') %}
+      <div class="note-line">{{ note }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="disclaimer">
+      <span class="disc-icon">⚕</span>
+      <strong>Medical Disclaimer:</strong> This result is generated by a research demo
+      and is <em>not</em> a clinical diagnosis. Consult a qualified neurologist
+      for proper medical evaluation.
+    </div>
+
+    <div class="result-actions">
+      <a href="/alzheimers" class="btn-run">← Analyze Another Video</a>
+      <a href="/dementia" class="btn-ghost">Try Dementia Module</a>
+      <a href="/chat" class="btn-ghost">Ask AI Assistant</a>
+      <a href="/history" class="btn-ghost">View History</a>
+    </div>
+
+    {% endif %}
+  </main>
+
+  <footer>
+    <span>Neuro<strong>Fusion</strong> v2.0</span>
+    <span class="foot-sep">·</span>
+    <span>Alzheimer's Screening · Research Demo</span>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('neuralCanvas');
+    const ctx    = canvas.getContext('2d');
+    let nodes    = [];
+    function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+    resize(); window.addEventListener('resize',resize);
+    for(let i=0;i<40;i++) nodes.push({
+      x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight,
+      vx:(Math.random()-.5)*.2, vy:(Math.random()-.5)*.2, r:Math.random()*1.5+.5
+    });
+    function drawNeural(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;
+        if(n.x<0||n.x>canvas.width)n.vx*=-1;
+        if(n.y<0||n.y>canvas.height)n.vy*=-1;});
+      for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+        const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);
+        if(d<100){ctx.beginPath();ctx.strokeStyle=`rgba(167,139,250,${(1-d/100)*.08})`;ctx.lineWidth=.5;ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}
+      }
+      nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle='rgba(167,139,250,.12)';ctx.fill();});
+      requestAnimationFrame(drawNeural);
+    }
+    drawNeural();
+    window.addEventListener('load',()=>{
+      setTimeout(()=>{
+        document.querySelectorAll('[data-w]').forEach(el=>{
+          el.style.transition='width 1.4s cubic-bezier(0.4,0,0.2,1)';
+          el.style.width=el.dataset.w+'%';
+        });
+      },200);
+    });
+  </script>
+</body>
+</html>

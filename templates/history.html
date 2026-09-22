@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History · {{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <canvas id="neuralCanvas"></canvas>
+  <header>
+    <div class="logo">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="url(#lgh)" stroke-width="1.5"/>
+        <path d="M8 18 C10 12, 14 10, 18 18 C22 26, 26 24, 28 18" stroke="url(#lgh2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="8" cy="18" r="2.5" fill="#a78bfa"/>
+        <circle cx="28" cy="18" r="2.5" fill="#38bdf8"/>
+        <defs>
+          <linearGradient id="lgh"  x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>
+          <linearGradient id="lgh2" x1="0" y1="18" x2="36" y2="18" gradientUnits="userSpaceOnUse"><stop stop-color="#a78bfa"/><stop offset="0.5" stop-color="#34d399"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>
+        </defs>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-name">Neuro<strong>Fusion</strong></span>
+        <span class="logo-version">v2.0</span>
+      </div>
+    </div>
+    <a href="/" class="back-btn">← Home</a>
+  </header>
+
+  <main>
+    <div class="result-header">
+      <h1>Analysis <span class="gradient-text">History</span></h1>
+    </div>
+
+    {% if records %}
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Job ID</th>
+            <th>Module</th>
+            <th>File</th>
+            <th>Prediction</th>
+            <th>Risk Score</th>
+            <th>Level</th>
+            <th>Time</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="mono">{{ r.job_id }}</td>
+            <td><span class="pill">{{ r.module or 'alzheimers' }}</span></td>
+            <td class="file-col">{{ r.video_name or r.audio_name }}</td>
+            {% if r.module == 'dementia' %}
+            <td class="pred-col {% if r.dementia_prediction and 'No' not in r.dementia_prediction %}risk-text{% else %}clear-text{% endif %}">
+              {{ r.dementia_prediction }}
+            </td>
+            <td class="mono">{{ r.dementia_risk_percent }}%</td>
+            <td><span class="risk-badge risk-{{ (r.dementia_level or 'Low')|lower|replace(' ','-') }}">{{ r.dementia_level }}</span></td>
+            {% else %}
+            <td class="pred-col {% if r.prediction and 'No' not in r.prediction %}risk-text{% else %}clear-text{% endif %}">
+              {{ r.prediction }}
+            </td>
+            <td class="mono">{{ r.risk_score_percent }}%</td>
+            <td><span class="risk-badge risk-{{ (r.risk_level or 'Low')|lower|replace(' ','-') }}">{{ r.risk_level }}</span></td>
+            {% endif %}
+            <td class="mono small-text">{{ r.started_at }}</td>
+            <td><a href="/api/result/{{ r.job_id }}" class="tbl-link" target="_blank">JSON</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-history">
+      <div class="empty-icon">📋</div>
+      <p>No analyses yet.</p>
+      <a href="/alzheimers" class="btn-run">Alzheimer's Analysis</a>
+      <a href="/dementia" class="btn-ghost">Dementia Analysis</a>
+    </div>
+    {% endif %}
+  </main>
+
+  <footer>
+    <span>Neuro<strong>Fusion</strong> v2.0</span>
+    <span class="foot-sep">·</span>
+    <span>Cross-Modal Transformer Framework for Non-Invasive Alzheimer's Screening</span>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('neuralCanvas');
+    const ctx    = canvas.getContext('2d');
+    let nodes    = [];
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    for (let i = 0; i < 30; i++) nodes.push({ x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, r: Math.random()*1.2+0.5 });
+    function draw() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      nodes.forEach(n => { n.x+=n.vx; n.y+=n.vy; if(n.x<0||n.x>canvas.width)n.vx*=-1; if(n.y<0||n.y>canvas.height)n.vy*=-1; });
+      for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+        const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);
+        if(d<90){ctx.beginPath();ctx.strokeStyle=`rgba(167,139,250,${(1-d/90)*0.07})`;ctx.lineWidth=0.4;ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}
+      }
+      nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle='rgba(167,139,250,0.1)';ctx.fill();});
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>

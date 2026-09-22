@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .module-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; max-width:900px; margin:2.5rem auto; padding:0 1rem; }
+    .module-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:2rem; text-decoration:none; display:block; transition:all .25s; }
+    .module-card:hover { transform:translateY(-4px); }
+    .module-card.ad { border-color:rgba(167,139,250,0.25); }
+    .module-card.ad:hover { border-color:rgba(167,139,250,0.5); box-shadow:0 12px 40px rgba(167,139,250,0.12); }
+    .module-card.dem { border-color:rgba(56,189,248,0.25); }
+    .module-card.dem:hover { border-color:rgba(56,189,248,0.5); box-shadow:0 12px 40px rgba(56,189,248,0.12); }
+    .module-icon { font-size:2.5rem; margin-bottom:1rem; }
+    .module-title { font-size:1.3rem; font-weight:700; margin-bottom:0.5rem; }
+    .module-title.ad-c { color:#a78bfa; }
+    .module-title.dem-c { color:#38bdf8; }
+    .module-desc { font-size:0.9rem; color:#999; line-height:1.6; margin-bottom:1.25rem; }
+    .module-meta { display:flex; gap:0.6rem; flex-wrap:wrap; }
+    .module-tag { font-size:0.7rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:3px 8px; color:#aaa; font-family:'JetBrains Mono',monospace; }
+    .module-cta { margin-top:1.5rem; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.4rem; }
+    .module-cta.ad-c { color:#a78bfa; }
+    .module-cta.dem-c { color:#38bdf8; }
+    @media(max-width:640px){ .module-grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+  <canvas id="neuralCanvas"></canvas>
+
+  <header>
+    <div class="logo">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="url(#lg1h)" stroke-width="1.5"/>
+        <path d="M8 18 C10 12, 14 10, 18 18 C22 26, 26 24, 28 18" stroke="url(#lg2h)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="8"  cy="18" r="2.5" fill="#a78bfa"/>
+        <circle cx="28" cy="18" r="2.5" fill="#38bdf8"/>
+        <defs>
+          <linearGradient id="lg1h" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+          <linearGradient id="lg2h" x1="0" y1="18" x2="36" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-name">Neuro<strong>Fusion</strong></span>
+        <span class="logo-version">v2.0</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/" class="nav-link active">Home</a>
+      <a href="/chat" class="nav-link">AI Assistant</a>
+      <a href="/history" class="nav-link">History</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Cross-Modal Transformer Framework
+      </div>
+      <h1>
+        Cognitive Health<br>
+        <span class="gradient-text">Screening</span><span class="cursor-blink">_</span>
+      </h1>
+      <p class="hero-sub">
+        Choose a screening module. Alzheimer's analysis uses video
+        (speech + facial cues). Dementia analysis uses audio only
+        (speech patterns).
+      </p>
+    </section>
+
+    <div class="module-grid">
+      <a href="/alzheimers" class="module-card ad">
+        <div class="module-icon">🎬</div>
+        <div class="module-title ad-c">Alzheimer's Detection</div>
+        <div class="module-desc">
+          Upload a short conversational video. Analyzes speech biomarkers
+          via Wav2Vec2 and facial micro-expressions via MediaPipe FaceMesh,
+          fused through a cross-modal transformer.
+        </div>
+        <div class="module-meta">
+          <span class="module-tag">Video input</span>
+          <span class="module-tag">Wav2Vec2</span>
+          <span class="module-tag">FaceMesh</span>
+          <span class="module-tag">CrossModalTransformer</span>
+        </div>
+        <div class="module-cta ad-c">Start Alzheimer's analysis →</div>
+      </a>
+
+      <a href="/dementia" class="module-card dem">
+        <div class="module-icon">🎙</div>
+        <div class="module-title dem-c">Dementia Detection</div>
+        <div class="module-desc">
+          Upload an audio recording of spontaneous speech. Analyzes pause
+          patterns, pitch variability, and speech rhythm using a
+          transformer with attention-based explainability.
+        </div>
+        <div class="module-meta">
+          <span class="module-tag">Audio input</span>
+          <span class="module-tag">Wav2Vec2</span>
+          <span class="module-tag">DementiaTransformer</span>
+          <span class="module-tag">Attention pooling</span>
+        </div>
+        <div class="module-cta dem-c">Start Dementia analysis →</div>
+      </a>
+    </div>
+
+    <section class="pipeline-section" style="max-width:900px;margin:0 auto;">
+      <div class="section-label">AI Assistant</div>
+      <a href="/chat" class="module-card" style="border-color:rgba(255,255,255,0.08);max-width:900px;">
+        <div class="module-icon">💬</div>
+        <div class="module-title" style="color:#e2e8f0;">Ask the AI Assistant</div>
+        <div class="module-desc">
+          RAG-powered chatbot grounded in research papers about
+          Alzheimer's and Dementia. Get cited answers backed by literature.
+        </div>
+        <div class="module-cta" style="color:#e2e8f0;">Open AI Assistant →</div>
+      </a>
+    </section>
+  </main>
+
+  <footer>
+    <span>Neuro<strong>Fusion</strong> v2.0</span>
+    <span class="foot-sep">·</span>
+    <span>Research Demo — Not a Clinical Diagnosis</span>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('neuralCanvas');
+    const ctx    = canvas.getContext('2d');
+    let nodes    = [];
+    function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+    resize(); window.addEventListener('resize',resize);
+    for(let i=0;i<40;i++) nodes.push({
+      x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight,
+      vx:(Math.random()-.5)*.2, vy:(Math.random()-.5)*.2, r:Math.random()*1.5+.5
+    });
+    function drawNeural(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;
+        if(n.x<0||n.x>canvas.width)n.vx*=-1;
+        if(n.y<0||n.y>canvas.height)n.vy*=-1;});
+      for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+        const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);
+        if(d<100){ctx.beginPath();ctx.strokeStyle=`rgba(167,139,250,${(1-d/100)*.08})`;ctx.lineWidth=.5;ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}
+      }
+      nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle='rgba(167,139,250,.12)';ctx.fill();});
+      requestAnimationFrame(drawNeural);
+    }
+    drawNeural();
+  </script>
+</body>
+</html>

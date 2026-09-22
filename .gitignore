@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment/secrets
+.env
+.env.*
+
+# Uploaded/generated files
+uploads/*
+outputs/*
+!outputs/.gitkeep
+
+# Python/Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Large model/checkpoint files
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+
+# Temporary/media files
+*.mp4
+*.avi
+*.mov
+*.wav
+*.mp3
+*.m4a
+*.zip
+data/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.pkl
+
+training/data/processed/

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <canvas id="neuralCanvas"></canvas>
+
+  <header>
+    <div class="logo">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="url(#lg1)" stroke-width="1.5"/>
+        <path d="M8 18 C10 12, 14 10, 18 18 C22 26, 26 24, 28 18" stroke="url(#lg2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="8"  cy="18" r="2.5" fill="#a78bfa"/>
+        <circle cx="28" cy="18" r="2.5" fill="#38bdf8"/>
+        <circle cx="18" cy="12" r="1.5" fill="#34d399" opacity="0.8"/>
+        <circle cx="18" cy="24" r="1.5" fill="#f472b6" opacity="0.8"/>
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+          <linearGradient id="lg2" x1="0" y1="18" x2="36" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="50%" stop-color="#34d399"/>
+            <stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-name">Neuro<strong>Fusion</strong></span>
+        <span class="logo-version">v2.0</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/" class="nav-link">Home</a>
+      <a href="/alzheimers" class="nav-link active">Alzheimer's</a>
+      <a href="/dementia" class="nav-link">Dementia</a>
+      <a href="/chat" class="nav-link">AI Assistant</a>
+      <a href="/history" class="nav-link">History</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Cross-Modal Transformer Framework
+      </div>
+      <h1>
+        Early Alzheimer's<br>
+        <span class="gradient-text">Detection</span><span class="cursor-blink">_</span>
+      </h1>
+      <p class="hero-sub">
+        Upload a short conversational video. Our AI jointly analyzes acoustic speech 
+        biomarkers and facial micro-expressions to estimate early cognitive risk — 
+        no invasive procedures needed.
+      </p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-n">2</span><span class="stat-l">Modalities</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-n">9+</span><span class="stat-l">Biomarkers</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-n">&lt;30s</span><span class="stat-l">Analysis</span></div>
+      </div>
+    </section>
+
+    <!-- Upload card -->
+    <div class="upload-card" id="uploadCard">
+      <form action="/upload/alzheimers" method="post" enctype="multipart/form-data" id="uploadForm">
+
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-glow"></div>
+          <div class="drop-icon-wrap">
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+              <rect width="52" height="52" rx="14" fill="rgba(167,139,250,0.08)"/>
+              <path d="M26 34V22M26 22L20 28M26 22L32 28" stroke="#a78bfa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 40h20" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+            </svg>
+          </div>
+          <p class="drop-title">Drop video here</p>
+          <p class="drop-hint">or <span class="drop-browse">browse files</span> · MP4, MOV, WEBM, MKV, AVI</p>
+          <input type="file" name="video" id="videoInput" accept="video/*" required/>
+        </div>
+
+        <div class="file-preview" id="filePreview" style="display:none">
+          <div class="file-preview-inner">
+            <div class="file-thumb">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="7" fill="rgba(167,139,250,0.15)"/>
+                <path d="M9 20V8l10 6-10 6z" fill="#a78bfa"/>
+              </svg>
+            </div>
+            <div class="file-meta">
+              <div class="file-name" id="fileName"></div>
+              <div class="file-size" id="fileSize"></div>
+            </div>
+            <button type="button" class="file-clear" onclick="clearFile()">✕</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-run" id="analyzeBtn" disabled>
+          <span>Run Analysis</span>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Processing modal -->
+    <div class="modal-overlay" id="processingModal" style="display:none">
+      <div class="modal-card">
+        <div class="modal-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" stroke="#1e1b4b" stroke-width="6"/>
+            <circle cx="40" cy="40" r="34" stroke="url(#ring-grad)" stroke-width="6"
+                    stroke-dasharray="213" stroke-dashoffset="53"
+                    stroke-linecap="round" class="ring-spin"/>
+            <defs>
+              <linearGradient id="ring-grad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#a78bfa"/>
+                <stop offset="1" stop-color="#38bdf8"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h3 class="modal-title">Analyzing<span class="dots-anim">...</span></h3>
+        <div class="modal-steps">
+          <div class="mstep" id="ms1"><span class="mstep-dot"></span>Uploading video</div>
+          <div class="mstep" id="ms2"><span class="mstep-dot"></span>Extracting audio stream</div>
+          <div class="mstep" id="ms3"><span class="mstep-dot"></span>Sampling video frames</div>
+          <div class="mstep" id="ms4"><span class="mstep-dot"></span>Computing speech biomarkers</div>
+          <div class="mstep" id="ms5"><span class="mstep-dot"></span>Analyzing facial cues</div>
+          <div class="mstep" id="ms6"><span class="mstep-dot"></span>Cross-modal fusion</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline section -->
+    <section class="pipeline-section">
+      <div class="section-label">How It Works</div>
+      <div class="pipeline">
+        <div class="pipe-node">
+          <div class="pipe-num">01</div>
+          <div class="pipe-icon">🎬</div>
+          <div class="pipe-name">Video Input</div>
+          <div class="pipe-desc">Short conversational recording, any device</div>
+        </div>
+        <svg class="pipe-arrow" width="40" height="20" viewBox="0 0 40 20">
+          <path d="M0 10 L30 10 M24 4 L30 10 L24 16" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="pipe-node pipe-split">
+          <div class="pipe-num">02</div>
+          <div class="pipe-icon">🎵</div>
+          <div class="pipe-name">Speech Encoder</div>
+          <div class="pipe-desc">Acoustic, prosodic &amp; linguistic features</div>
+        </div>
+        <div class="pipe-plus">+</div>
+        <div class="pipe-node pipe-split">
+          <div class="pipe-num">03</div>
+          <div class="pipe-icon">👁</div>
+          <div class="pipe-name">Visual Encoder</div>
+          <div class="pipe-desc">Facial landmarks &amp; micro-expression dynamics</div>
+        </div>
+        <svg class="pipe-arrow" width="40" height="20" viewBox="0 0 40 20">
+          <path d="M0 10 L30 10 M24 4 L30 10 L24 16" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="pipe-node pipe-highlight">
+          <div class="pipe-num">04</div>
+          <div class="pipe-icon">🔀</div>
+          <div class="pipe-name">Cross-Modal Transformer</div>
+          <div class="pipe-desc">Multi-head cross-attention fusion</div>
+        </div>
+        <svg class="pipe-arrow" width="40" height="20" viewBox="0 0 40 20">
+          <path d="M0 10 L30 10 M24 4 L30 10 L24 16" stroke="#34d399" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="pipe-node">
+          <div class="pipe-num">05</div>
+          <div class="pipe-icon">📊</div>
+          <div class="pipe-name">Risk Score</div>
+          <div class="pipe-desc">Binary prediction + continuous risk score</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Biomarkers info grid -->
+    <section class="bio-section">
+      <div class="section-label">Alzheimer's Biomarkers Detected</div>
+      <div class="bio-grid">
+        <div class="bio-card">
+          <div class="bio-icon speech-icon">🎤</div>
+          <div class="bio-body">
+            <h4>Pause Ratio</h4>
+            <p>AD patients exhibit significantly higher inter-word and inter-phrase pause rates (König et al., 2015)</p>
+          </div>
+        </div>
+        <div class="bio-card">
+          <div class="bio-icon speech-icon">📈</div>
+          <div class="bio-body">
+            <h4>MFCC Variance</h4>
+            <p>Reduced phoneme diversity and articulation precision captured via spectral cepstral coefficients</p>
+          </div>
+        </div>
+        <div class="bio-card">
+          <div class="bio-icon speech-icon">🔊</div>
+          <div class="bio-body">
+            <h4>Energy Dynamics</h4>
+            <p>Flattened vocal energy and monotone prosody are consistent early-stage AD markers (Luz, 2020)</p>
+          </div>
+        </div>
+        <div class="bio-card">
+          <div class="bio-icon visual-icon">😐</div>
+          <div class="bio-body">
+            <h4>Facial Expressiveness</h4>
+            <p>Reduced facial motor activity and emotion expression variability compared to healthy controls</p>
+          </div>
+        </div>
+        <div class="bio-card">
+          <div class="bio-icon visual-icon">👁</div>
+          <div class="bio-body">
+            <h4>Micro-Expressions</h4>
+            <p>Subtle involuntary facial movements across video frames reveal neuromuscular changes</p>
+          </div>
+        </div>
+        <div class="bio-card">
+          <div class="bio-icon visual-icon">🔀</div>
+          <div class="bio-body">
+            <h4>Cross-Modal Fusion</h4>
+            <p>Combined speech + facial signal significantly outperforms single-modality approaches</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="disclaimer">
+      <span class="disc-icon">⚕</span>
+      <strong>Medical Disclaimer:</strong> This tool is for research and educational purposes only.
+      It is <em>not</em> a clinical diagnostic device. Always consult a qualified neurologist or
+      healthcare professional for any medical evaluation or diagnosis.
+    </div>
+  </main>
+
+  <footer>
+    <span>Neuro<strong>Fusion</strong> v2.0</span>
+    <span class="foot-sep">·</span>
+    <span>Cross-Modal Transformer Framework for Non-Invasive Alzheimer's Screening</span>
+  </footer>
+
+  <script>
+    // ── Neural canvas background ──
+    const canvas = document.getElementById('neuralCanvas');
+    const ctx    = canvas.getContext('2d');
+    let nodes = [];
+    const NODE_COUNT = 55;
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < NODE_COUNT; i++) {
+      nodes.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        r: Math.random() * 2 + 1
+      });
+    }
+
+    function drawNeural() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0 || n.x > canvas.width)  n.vx *= -1;
+        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+
+        for (let j = i + 1; j < nodes.length; j++) {
+          const m  = nodes[j];
+          const dx = n.x - m.x, dy = n.y - m.y;
+          const d  = Math.sqrt(dx*dx + dy*dy);
+          if (d < 130) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(167,139,250,${(1 - d/130) * 0.12})`;
+            ctx.lineWidth   = 0.6;
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(m.x, m.y);
+            ctx.stroke();
+          }
+        }
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(167,139,250,0.18)';
+        ctx.fill();
+      }
+      requestAnimationFrame(drawNeural);
+    }
+    drawNeural();
+
+    // ── Upload interactions ──
+    const dropZone   = document.getElementById('dropZone');
+    const videoInput = document.getElementById('videoInput');
+    const filePreview= document.getElementById('filePreview');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const modal      = document.getElementById('processingModal');
+
+    dropZone.addEventListener('click', () => videoInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+    });
+    videoInput.addEventListener('change', () => { if (videoInput.files[0]) setFile(videoInput.files[0]); });
+
+    function setFile(file) {
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = fmtSize(file.size);
+      filePreview.style.display = 'block';
+      dropZone.style.display    = 'none';
+      analyzeBtn.disabled       = false;
+    }
+
+    function clearFile() {
+      videoInput.value          = '';
+      filePreview.style.display = 'none';
+      dropZone.style.display    = 'flex';
+      analyzeBtn.disabled       = true;
+    }
+
+    function fmtSize(b) {
+      return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+    }
+
+    uploadForm.addEventListener('submit', () => {
+      modal.style.display = 'flex';
+      runStepAnimation();
+    });
+
+    function runStepAnimation() {
+      const steps = ['ms1','ms2','ms3','ms4','ms5','ms6'];
+      const delays = [0, 2000, 3500, 5000, 6500, 8000];
+      steps.forEach((id, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('active');
+          if (i > 0) {
+            const prev = document.getElementById(steps[i-1]);
+            if (prev) prev.classList.add('done');
+          }
+        }, delays[i]);
+      });
+    }
+  </script>
+</body>
+</html>

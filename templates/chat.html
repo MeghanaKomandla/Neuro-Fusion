@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant · {{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .chat-wrap { max-width:760px; margin:2rem auto; padding:0 1rem; }
+    .chat-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:1.5rem; min-height:400px; max-height:520px; overflow-y:auto; display:flex; flex-direction:column; gap:1rem; margin-bottom:1rem; }
+    .msg { max-width:85%; padding:0.9rem 1.1rem; border-radius:12px; font-size:0.92rem; line-height:1.6; }
+    .msg-user { align-self:flex-end; background:rgba(167,139,250,0.15); border:1px solid rgba(167,139,250,0.25); color:#e2d9ff; }
+    .msg-bot  { align-self:flex-start; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.18); color:#cce9f8; }
+    .msg-sources { font-size:0.75rem; color:#888; margin-top:0.5rem; font-family:'JetBrains Mono',monospace; }
+    .msg-loading { align-self:flex-start; color:#888; font-size:0.85rem; font-style:italic; }
+    .chat-input-row { display:flex; gap:0.75rem; }
+    .chat-input { flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:0.8rem 1rem; color:#e2e8f0; font-size:0.92rem; font-family:'Syne',sans-serif; outline:none; }
+    .chat-input:focus { border-color:rgba(167,139,250,0.5); }
+    .chat-send { background:linear-gradient(135deg,#a78bfa,#38bdf8); border:none; border-radius:10px; padding:0.8rem 1.4rem; color:#fff; font-weight:600; cursor:pointer; font-size:0.9rem; white-space:nowrap; }
+    .chat-send:disabled { opacity:0.5; cursor:not-allowed; }
+    .suggested { display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; }
+    .sug-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:0.4rem 0.9rem; font-size:0.8rem; color:#aaa; cursor:pointer; transition:all .2s; }
+    .sug-btn:hover { border-color:rgba(167,139,250,0.4); color:#e2d9ff; }
+    .kb-note { background:rgba(250,191,117,0.08); border:1px solid rgba(250,191,117,0.2); border-radius:10px; padding:0.8rem 1rem; font-size:0.8rem; color:#fbbf24; margin-bottom:1rem; }
+  </style>
+</head>
+<body>
+
+  <canvas id="neuralCanvas"></canvas>
+
+  <header>
+    <div class="logo">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="url(#lg1c)" stroke-width="1.5"/>
+        <path d="M8 18 C10 12, 14 10, 18 18 C22 26, 26 24, 28 18" stroke="url(#lg2c)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="8"  cy="18" r="2.5" fill="#a78bfa"/>
+        <circle cx="28" cy="18" r="2.5" fill="#38bdf8"/>
+        <defs>
+          <linearGradient id="lg1c" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+          <linearGradient id="lg2c" x1="0" y1="18" x2="36" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a78bfa"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-name">Neuro<strong>Fusion</strong></span>
+        <span class="logo-version">v2.0</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/" class="nav-link">Analysis</a>
+      <a href="/chat" class="nav-link active">AI Assistant</a>
+      <a href="/history" class="nav-link">History</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="chat-wrap">
+      <section class="hero" style="padding-bottom:1rem;">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          RAG · Gemini 1.5 Flash · Research-backed answers
+        </div>
+        <h1>AI <span class="gradient-text">Assistant</span></h1>
+        <p class="hero-sub">
+          Ask anything about Alzheimer's and Dementia.
+          Answers are grounded in research papers and clinical guidelines.
+        </p>
+      </section>
+
+      <div class="kb-note">
+        Add research PDFs to the <strong>knowledge_base/</strong> folder for cited answers.
+        Free PDFs: WHO dementia report, Alzheimer's Association annual report,
+        PubMed AD speech papers.
+      </div>
+
+      <div class="suggested">
+        <button class="sug-btn" onclick="ask('What are early signs of Alzheimer\'s disease?')">Early signs of Alzheimer's</button>
+        <button class="sug-btn" onclick="ask('How is dementia different from Alzheimer\'s?')">Dementia vs Alzheimer's</button>
+        <button class="sug-btn" onclick="ask('What speech changes occur in Alzheimer\'s patients?')">Speech changes in AD</button>
+        <button class="sug-btn" onclick="ask('What is the Cookie Theft test?')">Cookie Theft test</button>
+        <button class="sug-btn" onclick="ask('What is the MMSE score?')">MMSE score explained</button>
+        <button class="sug-btn" onclick="ask('How can AI help detect Alzheimer\'s early?')">AI for early detection</button>
+      </div>
+
+      <div class="chat-box" id="chatBox">
+        <div class="msg msg-bot">
+          Hello! I am your AI assistant for Alzheimer's and Dementia research.
+          Ask me anything about symptoms, detection methods, research findings,
+          or how this system works.
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" type="text"
+               placeholder="Ask about Alzheimer's or Dementia..."
+               onkeydown="if(event.key==='Enter') sendMessage()"/>
+        <button class="chat-send" id="sendBtn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Neuro<strong>Fusion</strong> v2.0</span>
+    <span class="foot-sep">·</span>
+    <span>AI responses are for research purposes only — not medical advice</span>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('neuralCanvas');
+    const ctx    = canvas.getContext('2d');
+    let nodes    = [];
+    function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+    resize(); window.addEventListener('resize',resize);
+    for(let i=0;i<40;i++) nodes.push({
+      x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight,
+      vx:(Math.random()-.5)*.2, vy:(Math.random()-.5)*.2, r:Math.random()*1.5+.5
+    });
+    function drawNeural(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;
+        if(n.x<0||n.x>canvas.width)n.vx*=-1;
+        if(n.y<0||n.y>canvas.height)n.vy*=-1;});
+      for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+        const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);
+        if(d<100){ctx.beginPath();ctx.strokeStyle=`rgba(167,139,250,${(1-d/100)*.08})`;ctx.lineWidth=.5;ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}
+      }
+      nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle='rgba(167,139,250,.12)';ctx.fill();});
+      requestAnimationFrame(drawNeural);
+    }
+    drawNeural();
+
+    function ask(q){ document.getElementById('chatInput').value=q; sendMessage(); }
+
+    async function sendMessage(){
+      const input  = document.getElementById('chatInput');
+      const box    = document.getElementById('chatBox');
+      const btn    = document.getElementById('sendBtn');
+      const q      = input.value.trim();
+      if(!q) return;
+      input.value  = '';
+      btn.disabled = true;
+
+      const uDiv = document.createElement('div');
+      uDiv.className = 'msg msg-user';
+      uDiv.textContent = q;
+      box.appendChild(uDiv);
+
+      const loading = document.createElement('div');
+      loading.className = 'msg-loading';
+      loading.textContent = 'Searching research papers...';
+      box.appendChild(loading);
+      box.scrollTop = box.scrollHeight;
+
+      try {
+        const fd = new FormData();
+        fd.append('question', q);
+        const res  = await fetch('/chat', { method:'POST', body:fd });
+        const data = await res.json();
+        box.removeChild(loading);
+
+        const bDiv = document.createElement('div');
+        bDiv.className = 'msg msg-bot';
+        bDiv.textContent = data.answer || 'No answer received.';
+
+        if(data.sources && data.sources.length > 0){
+          const s = document.createElement('div');
+          s.className = 'msg-sources';
+          s.textContent = 'Sources: ' + data.sources.join(', ');
+          bDiv.appendChild(s);
+        }
+        box.appendChild(bDiv);
+      } catch(err){
+        box.removeChild(loading);
+        const eDiv = document.createElement('div');
+        eDiv.className = 'msg msg-bot';
+        eDiv.textContent = 'Error: ' + err.message;
+        box.appendChild(eDiv);
+      }
+
+      btn.disabled = false;
+      box.scrollTop = box.scrollHeight;
+    }
+  </script>
+</body>
+</html>
